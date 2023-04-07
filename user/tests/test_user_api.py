@@ -4,6 +4,7 @@ Tests user api
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from core import models
 
 from rest_framework.test import APIClient
 from rest_framework import status
@@ -11,6 +12,12 @@ from rest_framework import status
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token_obtain_pair')
 ME_URL = reverse('user:me')
+user_list_url = reverse('user:user_list')
+grouping_request_url = reverse('user:grouping_requests')
+
+
+def user_grp_url(user_uid):
+    return reverse('user:user_grp',args=[user_uid])
 
 
 def create_user(**params):
@@ -126,3 +133,39 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_list_of_users_by_category(self):
+        """Test Showing user list by their category"""
+        cat = models.Category.objects.create(title='electronic')
+        cat2 = models.Category.objects.create(title='fashion')
+        user1 = create_user(email='user1@example.com', password='newpassword123', category=cat, name='osman')
+        user2 = create_user(email='user2@example.com', password='12345', category=cat, name='goni')
+        user3 = create_user(email='user3@example.com', password='12345', category=cat2, name='abir')
+        self.user.category = cat
+        res = self.client.get(user_list_url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data),2)
+
+    def test_create_user_group(self):
+        """Test creating a user group."""
+        test_user = create_user(email='user@example.com', password='12345' , name='exampleuser')
+
+        res = self.client.post(user_grp_url(test_user.uid))
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(models.UserGroup.objects.filter(sender=self.user).exists())
+
+    def test_show_grouping_requests(self):
+        """Test showing all grouping requests."""
+        user1 = create_user(email='user1@example.com', password='12345')
+        user2 = create_user(email='user2@example.com', password='12345')
+        user3 = create_user(email='user3@example.com', password='12345')
+
+        models.UserGroup.objects.create(sender=user1,receiver=self.user,status='pending')
+        models.UserGroup.objects.create(sender=user2,receiver=self.user,status='pending')
+        models.UserGroup.objects.create(sender=user3,receiver=self.user,status='pending')
+
+        res = self.client.get(grouping_request_url)
+
+        self.assertEqual(res.status_code,status.HTTP_200_OK)
+        self.assertEqual(len(res.data),3)

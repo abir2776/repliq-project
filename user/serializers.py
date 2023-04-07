@@ -37,3 +37,13 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
+    
+class UserListSerializer(serializers.Serializer):
+    """Serializer for showing user list."""
+    uid = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+class UserGroupSerializer(serializers.Serializer):
+    """Serializer for showing user grouping requests."""
+    uid = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)

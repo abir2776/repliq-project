@@ -5,12 +5,20 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+import uuid
 
-class Category(models.Model):
-    """Category object"""
-    title = models.CharField(max_length=255)
+class BaseModelWithUID(models.Model):
+    uid = models.UUIDField(default=uuid.uuid4,unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+class Category(BaseModelWithUID):
+    """Category object"""
+    title = models.CharField(max_length=255)
+
 
     def __str__(self):
         return self.title
@@ -35,11 +43,11 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin, BaseModelWithUID):
     """User in the system."""
     email = models.EmailField(max_length=255,unique=True)
     name = models.CharField(max_length=255)
-    profile_pic = models.ImageField(upload_to='profile_pic')
+    profile_pic = models.ImageField(upload_to='profile_pic',blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     category = models.ForeignKey(Category,on_delete=models.DO_NOTHING,blank=True,related_name='categorys',null=True)
@@ -49,7 +57,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
     
-class UserGroup(models.Model):
+class UserGroup(BaseModelWithUID):
     """Create a new user group"""
     CHOICES = (
       ('accepted', 'Accepted'),
@@ -59,8 +67,6 @@ class UserGroup(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='senders')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='receivers')
     status = models.CharField(max_length=15, choices=CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.status
