@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "user",
     "store",
+    "versatileimagefield",
+    "order",
 ]
 
 MIDDLEWARE = [

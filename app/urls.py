@@ -9,12 +9,13 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/users/", include("user.urls")),
+    path("users/", include("user.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
-    path("api/store/", include("store.urls")),
+    path("store/", include("store.urls")),
     path(
         "api/docs/",
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    path("order/", include("order.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
